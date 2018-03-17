@@ -37,7 +37,7 @@ void error(const __FlashStringHelper*err) {
 
 //***SETTINGS***//
 #ifndef SPEED_COUNTER_SETTING
-#define SPEED_COUNTER_SETTING 4
+#define SPEED_COUNTER_SETTING 8 // Default 4
 #endif
 
 #ifndef SIP_THRESHOLD_SETTING
@@ -82,7 +82,7 @@ void error(const __FlashStringHelper*err) {
 int xh, yh, xl, yl;                               // xh: x-high, yh: y-high, xl: x-low, yl: y-low
 int x_right, x_left, y_up, y_down;                // individual neutral starting positions for each FSR
 
-int xh_max, xl_max, yh_max, yl_max;               // may just declare these variables but not initialize them because
+//int xh_max, xl_max, yh_max, yl_max;               // may just declare these variables but not initialize them because
 // these values will be pulled from the EEPROM
 
 float constant_radius = 30.0;                     // constant radius is initialized to 30.0 but may be changed in joystick initialization
@@ -123,6 +123,7 @@ typedef struct {
   int _max_speed;
 } _cursor;
 
+
 _cursor setting1 = {5, -1.1, default_cursor_speed - (4 * delta_cursor_speed)}; // 5,-1.0,10
 _cursor setting2 = {5, -1.1, default_cursor_speed - (3 * delta_cursor_speed)}; // 5,-1.2,10
 _cursor setting3 = {5, -1.1, default_cursor_speed - (2 * delta_cursor_speed)};
@@ -137,6 +138,19 @@ _cursor cursor_params[9] = {setting1, setting2, setting3, setting4, setting5, se
 
 int single = 0;
 int puff1, puff2;
+
+
+
+
+// Our hardcoded values --> Need to later put into EEPROM or APP Config or something
+//float yh_comp = 1.0;
+//float yl_comp = 1.0;
+//float xh_comp = 1.0;
+//float xl_comp = 1.0;
+float xh_max = 756;
+float xl_max = 750;
+float yh_max = 798;
+float yl_max = 746;
 
 //-----------------------------------------------------------------------------------------------------------------------------------
 
@@ -188,6 +202,38 @@ void setup() {
   cursor_delay = cursor_params[speed_counter]._delay;
   cursor_factor = cursor_params[speed_counter]._factor;
   cursor_max_speed = cursor_params[speed_counter]._max_speed;
+
+  Serial.print("cursor_delay: ");
+  Serial.println(cursor_delay);
+
+  Serial.print("cursor_factor: ");
+  Serial.println(cursor_factor);
+
+  Serial.print("cursor_max_speed: ");
+  Serial.println(cursor_max_speed);
+
+  
+  cursor_max_speed = 5; // WLL - March 17 Need to delete later
+  // Find Neutral Positions At Startup
+  x_right = analogRead(X_DIR_HIGH);            // Initial neutral x-high value of joystick
+  delay(10);
+
+  x_left = analogRead(X_DIR_LOW);             // Initial neutral x-low value of joystick
+  delay(10);
+
+  y_up = analogRead(Y_DIR_HIGH);            // Initial neutral y-high value of joystick
+  delay(10);
+
+  y_down = analogRead(Y_DIR_LOW);             // Initial neutral y-low value of joystick
+
+  Serial.println("=========== INIT ============");
+  Serial.println(x_right);
+    Serial.println(x_left);
+      Serial.println(y_up);
+      Serial.println(y_down);
+        Serial.println("=========== INIT  DONE ============");
+      
+  
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------
@@ -196,10 +242,27 @@ void setup() {
 
 void loop() {
 
+  Serial.print("Cursor Max Speed: ");
+  Serial.println(cursor_max_speed);
+
   xh = analogRead(X_DIR_HIGH);                    // A0
   xl = analogRead(X_DIR_LOW);                     // A1
   yh = analogRead(Y_DIR_HIGH);                    // A2
   yl = analogRead(Y_DIR_LOW);                     // A3
+
+  Serial.print("xh:");
+  Serial.println(xh);
+
+  Serial.print("xl:");
+  Serial.println(xl);
+
+  Serial.print("yh:");
+  Serial.println(yh);
+
+  Serial.print("yl:");
+  Serial.println(yl);
+
+  Serial.println("-----");
 
   xh_yh = sqrt(sq(((xh - x_right) > 0) ? (float)(xh - x_right) : 0.0) + sq(((yh - y_up) > 0) ? (float)(yh - y_up) : 0.0));     // sq() function raises input to power of 2, returning the same data type int->int ...
   xh_yl = sqrt(sq(((xh - x_right) > 0) ? (float)(xh - x_right) : 0.0) + sq(((yl - y_down) > 0) ? (float)(yl - y_down) : 0.0));   // the sqrt() function raises input to power 1/2, returning a float type
@@ -210,7 +273,7 @@ void loop() {
 
     poll_counter++;
 
-    delay(20);    // originally 15 ms
+    //delay(20);    // originally 15 ms
 
     if (poll_counter >= 3) {
 
@@ -218,22 +281,23 @@ void loop() {
       if (!BLUETOOTH_MODE) {
 
         if ((xh_yh >= xh_yl) && (xh_yh >= xl_yh) && (xh_yh >= xl_yl)) {
-          //Serial.println("quad1");
+          Serial.println("quad1");
+          Serial.println(x_cursor_high(xh), y_cursor_high(yh));
           Mouse.move(x_cursor_high(xh), y_cursor_high(yh), 0);
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xh_yl > xh_yh) && (xh_yl > xl_yl) && (xh_yl > xl_yh)) {
-          //Serial.println("quad4");
+          Serial.println("quad4");
           Mouse.move(x_cursor_high(xh), y_cursor_low(yl), 0);
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xl_yl >= xh_yh) && (xl_yl >= xh_yl) && (xl_yl >= xl_yh)) {
-          //Serial.println("quad3");
+          Serial.println("quad3");
           Mouse.move(x_cursor_low(xl), y_cursor_low(yl), 0);
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xl_yh > xh_yh) && (xl_yh >= xh_yl) && (xl_yh >= xl_yl)) {
-          //Serial.println("quad2");
+          Serial.println("quad2");
           Mouse.move(x_cursor_low(xl), y_cursor_high(yh), 0);
           delay(cursor_delay);
           poll_counter = 0;
@@ -292,6 +356,8 @@ void loop() {
   //pressure sensor sip and puff functions below
 
   cursor_click = (((float)analogRead(PRESSURE_CURSOR)) / 1023.0) * 5.0;
+  Serial.print("CLICKED CLICKED CLICKED: ");
+  Serial.println(cursor_click);
 
   if (is_puffed(cursor_click)) {
     while (is_puffed(cursor_click)) {
@@ -326,7 +392,7 @@ void loop() {
         cursor_click_status = 1; //change this stuff to hex
         //mouseCommand(cursor_click_status, 0, 0, 0);
         ble_mouseCommand(cursor_click_status, 0, 0, 0);
-        mouseClear();
+        //mouseClear();
         cursor_click_status = 0;
         delay(5);
       } else if (puff_count > SIPPUFF_SECONDARY_DURATION_THRESHOLD_SETTING * 150 && puff_count < SIPPUFF_TERTIARY_DURATION_THRESHOLD_SETTING * 150) {
@@ -370,7 +436,7 @@ void loop() {
         //mouseCommand(cursor_click_status, 0, 0, 0);
         ble_mouseCommand(cursor_click_status, 0, 0, 0);
         cursor_click_status = 0;
-        mouseClear();
+        //mouseClear();
         delay(5);
       } else if (sip_count > SIPPUFF_SECONDARY_DURATION_THRESHOLD_SETTING * 150 && sip_count < SIPPUFF_TERTIARY_DURATION_THRESHOLD_SETTING * 150) {
         mouseScroll();
@@ -579,23 +645,34 @@ void decrease_cursor_speed(void) {
 //***HID MOUSE CURSOR MOVEMENT FUNCTIONS***//
 
 int y_cursor_high(int j) {
+  Serial.print(" IN Y_CURSOR_HI: ");
+  Serial.print("j: ");
+  Serial.println(j);
+  Serial.print(" y_up: ");
+  Serial.println(y_up);
+  Serial.print("yh_max: ");
+  Serial.println(yh_max);
 
   if (j > y_up) {
-
+    Serial.println("In the j > y_up condition");
     float y_up_factor = 1.25 * (yh_comp * (((float)(j - y_up)) / (yh_max - y_up)));
-
-    int k = (int)(round(-1.0 * pow(cursor_max_speed, y_up_factor)) - 1.0);
-
+    Serial.print("y_up_factor: ");
+    Serial.println(y_up_factor);
+    int k = (int)(round(-1.0 * pow(cursor_max_speed, y_up_factor)) - 1.0);   
     if (k <= (-1 * cursor_max_speed) ) {
       k = -1 * cursor_max_speed;
+      Serial.println("first conditional");
       return k;
     } else if ( (k < 0) && (k > (-1 * cursor_max_speed))) {
+      Serial.println("second conditional");
       return k;
     } else {
+      Serial.println("third conditional");
       k = 0;
       return k;
     }
   } else {
+    Serial.println("fourth conditional");
     return 0;
   }
 }
@@ -605,9 +682,10 @@ int y_cursor_low(int j) {
   if (j > y_down) {
 
     float y_down_factor = 1.25 * (yl_comp * (((float)(j - y_down)) / (yl_max - y_down)));
-
+    
     int k = (int)(round(1.0 * pow(cursor_max_speed, y_down_factor)) - 1.0);
-
+    Serial.print("k:");
+      Serial.println(k);
     if (k >= cursor_max_speed) {
 
       k = cursor_max_speed;
@@ -628,9 +706,10 @@ int x_cursor_high(int j) {
   if (j > x_right) {
 
     float x_right_factor = 1.25 * (xh_comp * (((float)(j - x_right)) / (xh_max - x_right)));
-
-    int k = (int)(round(1.0 * pow(cursor_max_speed, x_right_factor)) - 1.0);
     
+    int k = (int)(round(1.0 * pow(cursor_max_speed, x_right_factor)) - 1.0);
+    Serial.print("k:");
+      Serial.println(k);
     if (k >= cursor_max_speed) {
 
       k = cursor_max_speed;
@@ -653,7 +732,8 @@ int x_cursor_low(int j) {
     float x_left_factor = 1.25 * (xl_comp * (((float)(j - x_left)) / (xl_max - x_left)));
 
     int k = (int)(round(-1.0 * pow(cursor_max_speed, x_left_factor)) - 1.0);
-
+    Serial.print("k:");
+      Serial.println(k);
     if ( k <= (-1 * cursor_max_speed) ) {
       k = -1 * cursor_max_speed;
       return k;
@@ -682,15 +762,18 @@ void ble_mouseCommand(int buttons, int x, int y, int scroll ) {
     ble.println(",");
     
     // Clicking
-    if( buttons == 1 ) // Left Click
-    ble.println(F("AT+BLEHIDMOUSEBUTTON=L,doubleclick"));
+    if( buttons == 1 ) { // Left Click
+      ble.println(F("AT+BLEHIDMOUSEBUTTON=L,doubleclick"));
+      Serial.println("YOYOYOYOOY LEFT CLICKED");
+    }
 
-    if( buttons == 2 ) // Right Click
-     ble.println(F("AT+BLEHIDMOUSEBUTTON=R,doubleclick"));
-
+    if( buttons == 2 ) { // Right Click
+       ble.println(F("AT+BLEHIDMOUSEBUTTON=R"));
+       Serial.println("YOYOYOYOOY RIGHT CLICKED");
+    }
+    
     //if( buttons == 3 ) // Middle Button
     
-  
 }
 
 void mouseCommand(int buttons, int x, int y, int scroll) {
@@ -808,7 +891,7 @@ void Joystick_Initialization(void) {
   x_left = xl;
   y_up = yh;
   y_down = yl;
-
+/*
   EEPROM.get(6, yh_comp);
   delay(10);
   EEPROM.get(10, yl_comp);
@@ -825,7 +908,7 @@ void Joystick_Initialization(void) {
   delay(10);
   EEPROM.get(28, yl_max);
   delay(10);
-
+*/
   constant_radius = 30.0;                       //40.0 works well for a constant radius
 
   xh_yh_radius = constant_radius;
@@ -995,7 +1078,6 @@ void Manual_Joystick_Home_Calibration(void) {
   delay(10);
 
   Serial.println("Home position calibration complete.");
-
 }
 
 //***SPECIAL INITIALIZATION OPERATIONS***//
