@@ -64,6 +64,35 @@ void error(const __FlashStringHelper*err) {
 #define BLUETOOTH_MODE 1
 #endif
 
+//***MOUSE STATUS***//
+#ifndef NO_CLICK
+#define NO_CLICK 0
+#endif
+
+#ifndef MOUSE_LEFT
+#define MOUSE_LEFT 1
+#endif
+
+#ifndef MOUSE_RIGHT
+#define MOUSE_LEFT 2
+#endif
+
+#ifndef MOUSE_DRAG
+#define MOUSE_DRAG 3
+#endif
+
+#ifndef MOUSE_MIDDLE
+#define MOUSE_MIDDLE 4
+#endif
+
+
+// Arduino mouse.h library defines (Documentation for easy referrel)
+//#define NO_CLICK 0
+//#define MOUSE_DRAG 3
+// #define MOUSE_LEFT 1
+// #define MOUSE_RIGHT 2
+// #define MOUSE_MIDDLE 4
+
 //***PIN ASSIGNMENTS***//
 
 #define MODE_SELECT 12
@@ -124,6 +153,7 @@ typedef struct {
 } _cursor;
 
 
+
 _cursor setting1 = {5, -1.1, default_cursor_speed - (4 * delta_cursor_speed)}; // 5,-1.0,10
 _cursor setting2 = {5, -1.1, default_cursor_speed - (3 * delta_cursor_speed)}; // 5,-1.2,10
 _cursor setting3 = {5, -1.1, default_cursor_speed - (2 * delta_cursor_speed)};
@@ -134,11 +164,11 @@ _cursor setting7 = {5, -1.1, default_cursor_speed + (2 * delta_cursor_speed)};
 _cursor setting8 = {5, -1.1, default_cursor_speed + (3 * delta_cursor_speed)};
 _cursor setting9 = {5, -1.1, default_cursor_speed + (4 * delta_cursor_speed)};
 
+
 _cursor cursor_params[9] = {setting1, setting2, setting3, setting4, setting5, setting6, setting7, setting8, setting9};
 
 int single = 0;
 int puff1, puff2;
-
 
 
 
@@ -228,10 +258,10 @@ void setup() {
 
   Serial.println("=========== INIT ============");
   Serial.println(x_right);
-    Serial.println(x_left);
-      Serial.println(y_up);
-      Serial.println(y_down);
-        Serial.println("=========== INIT  DONE ============");
+  Serial.println(x_left);
+  Serial.println(y_up);
+  Serial.println(y_down);
+  Serial.println("=========== INIT  DONE ============");
       
   
 }
@@ -242,14 +272,12 @@ void setup() {
 
 void loop() {
 
-  Serial.print("Cursor Max Speed: ");
-  Serial.println(cursor_max_speed);
-
   xh = analogRead(X_DIR_HIGH);                    // A0
   xl = analogRead(X_DIR_LOW);                     // A1
   yh = analogRead(Y_DIR_HIGH);                    // A2
   yl = analogRead(Y_DIR_LOW);                     // A3
 
+/*
   Serial.print("xh:");
   Serial.println(xh);
 
@@ -263,6 +291,7 @@ void loop() {
   Serial.println(yl);
 
   Serial.println("-----");
+  */
 
   xh_yh = sqrt(sq(((xh - x_right) > 0) ? (float)(xh - x_right) : 0.0) + sq(((yh - y_up) > 0) ? (float)(yh - y_up) : 0.0));     // sq() function raises input to power of 2, returning the same data type int->int ...
   xh_yl = sqrt(sq(((xh - x_right) > 0) ? (float)(xh - x_right) : 0.0) + sq(((yl - y_down) > 0) ? (float)(yl - y_down) : 0.0));   // the sqrt() function raises input to power 1/2, returning a float type
@@ -281,23 +310,23 @@ void loop() {
       if (!BLUETOOTH_MODE) {
 
         if ((xh_yh >= xh_yl) && (xh_yh >= xl_yh) && (xh_yh >= xl_yl)) {
-          Serial.println("quad1");
+          //Serial.println("quad1");
           Serial.println(x_cursor_high(xh), y_cursor_high(yh));
           Mouse.move(x_cursor_high(xh), y_cursor_high(yh), 0);
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xh_yl > xh_yh) && (xh_yl > xl_yl) && (xh_yl > xl_yh)) {
-          Serial.println("quad4");
+          //Serial.println("quad4");
           Mouse.move(x_cursor_high(xh), y_cursor_low(yl), 0);
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xl_yl >= xh_yh) && (xl_yl >= xh_yl) && (xl_yl >= xl_yh)) {
-          Serial.println("quad3");
+          //Serial.println("quad3");
           Mouse.move(x_cursor_low(xl), y_cursor_low(yl), 0);
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xl_yh > xh_yh) && (xl_yh >= xh_yl) && (xl_yh >= xl_yl)) {
-          Serial.println("quad2");
+          //Serial.println("quad2");
           Mouse.move(x_cursor_low(xl), y_cursor_high(yh), 0);
           delay(cursor_delay);
           poll_counter = 0;
@@ -306,25 +335,21 @@ void loop() {
 
         if ((xh_yh >= xh_yl) && (xh_yh >= xl_yh) && (xh_yh >= xl_yl)) {
           //Serial.println("quad1");
-          //mouseCommand(cursor_click_status, x_cursor_high(xh), y_cursor_high(yh), 0);
           ble_mouseCommand(cursor_click_status, x_cursor_high(xh), y_cursor_high(yh),0 );
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xh_yl > xh_yh) && (xh_yl > xl_yl) && (xh_yl > xl_yh)) {
           //Serial.println("quad4");
-          //mouseCommand(cursor_click_status, x_cursor_high(xh), y_cursor_low(yl), 0);
           ble_mouseCommand(cursor_click_status, x_cursor_high(xh), y_cursor_low(yl),0 );
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xl_yl >= xh_yh) && (xl_yl >= xh_yl) && (xl_yl >= xl_yh)) {
           //Serial.println("quad3");
-          //mouseCommand(cursor_click_status, x_cursor_low(xl), y_cursor_low(yl), 0);
           ble_mouseCommand(cursor_click_status, x_cursor_low(xl), y_cursor_low(yl),0 );
           delay(cursor_delay);
           poll_counter = 0;
         } else if ((xl_yh > xh_yh) && (xl_yh >= xh_yl) && (xl_yh >= xl_yl)) {
           //Serial.println("quad2");
-          //mouseCommand(cursor_click_status, x_cursor_low(xl), y_cursor_high(yh), 0);
           ble_mouseCommand(cursor_click_status, x_cursor_low(xl), y_cursor_high(yh),0 );
           delay(cursor_delay);
           poll_counter = 0;
@@ -356,8 +381,6 @@ void loop() {
   //pressure sensor sip and puff functions below
 
   cursor_click = (((float)analogRead(PRESSURE_CURSOR)) / 1023.0) * 5.0;
-  Serial.print("CLICKED CLICKED CLICKED: ");
-  Serial.println(cursor_click);
 
   if (is_puffed(cursor_click)) {
     while (is_puffed(cursor_click)) {
@@ -377,6 +400,7 @@ void loop() {
           delay(5);
         }
       } else if (puff_count > SIPPUFF_SECONDARY_DURATION_THRESHOLD_SETTING * 150 && puff_count < SIPPUFF_TERTIARY_DURATION_THRESHOLD_SETTING * 150) {
+        Serial.println("Is this supposed to drag?");
         if (Mouse.isPressed(MOUSE_LEFT)) {
           Mouse.release(MOUSE_LEFT);
         } else {
@@ -389,18 +413,23 @@ void loop() {
       }
     } else {
       if (puff_count < SIPPUFF_SECONDARY_DURATION_THRESHOLD_SETTING * 150) {
-        cursor_click_status = 1; //change this stuff to hex
-        //mouseCommand(cursor_click_status, 0, 0, 0);
+        cursor_click_status = 1; 
         ble_mouseCommand(cursor_click_status, 0, 0, 0);
-        //mouseClear();
         cursor_click_status = 0;
         delay(5);
       } else if (puff_count > SIPPUFF_SECONDARY_DURATION_THRESHOLD_SETTING * 150 && puff_count < SIPPUFF_TERTIARY_DURATION_THRESHOLD_SETTING * 150) {
         if (cursor_click_status == 0) {
-          cursor_click_status = 1;
-        } else if (cursor_click_status == 1) {
+          cursor_click_status = 3;
+          ble_mouseCommand(cursor_click_status, 0, 0, 0);
           cursor_click_status = 0;
-        }
+          delay(5);
+        } 
+        /*else if (cursor_click_status == 3) {
+          cursor_click_status = 0;
+          ble_mouseCommand(cursor_click_status, 0, 0, 0);
+          cursor_click_status = 3;
+        } */
+
       } else if (puff_count > SIPPUFF_TERTIARY_DURATION_THRESHOLD_SETTING * 150) {
         blink(4, 350, 3);     // visual prompt for user to release joystick for automatic calibration of home position
         Manual_Joystick_Home_Calibration();
@@ -435,7 +464,7 @@ void loop() {
         cursor_click_status = 2;
         //mouseCommand(cursor_click_status, 0, 0, 0);
         ble_mouseCommand(cursor_click_status, 0, 0, 0);
-        cursor_click_status = 0;
+        //cursor_click_status = 0;
         //mouseClear();
         delay(5);
       } else if (sip_count > SIPPUFF_SECONDARY_DURATION_THRESHOLD_SETTING * 150 && sip_count < SIPPUFF_TERTIARY_DURATION_THRESHOLD_SETTING * 150) {
@@ -517,28 +546,28 @@ void cursor_swipe(void) {
   } else {
 
     cursor_click_status = 0;
-    for (int i = 0; i < 3; i++) mouseCommand(cursor_click_status, 0, 126, 0);
+    for (int i = 0; i < 3; i++) 
+    ble_mouseCommand(cursor_click_status, 0, 126, 0);
     delay(125);
 
     cursor_click_status = 1;
-    for (int j = 0; j < 3; j++) mouseCommand(cursor_click_status, 0, -126, 0);
-    mouseClear();
+    for (int j = 0; j < 3; j++) 
+    ble_mouseCommand(cursor_click_status, 0, -126, 0);
     cursor_click_status = 0;
     delay(125);
   }
 }
 
 void mouse_middle_button(void) {
-  Serial.println("too slow");
   if (!BLUETOOTH_MODE) {
     Mouse.click(MOUSE_MIDDLE);
     delay(125);
   } else {
-    cursor_click_status = 0x05;
-    mouseCommand(cursor_click_status, 0, 0, 0);
-    //delay(125);
-    mouseClear();
-    cursor_click_status = 0x00;
+    //cursor_click_status = 0x05;
+    Serial.println("MOUSE MIDDLE BLUETOOTH");
+    cursor_click_status = 4;
+    ble_mouseCommand(cursor_click_status, 0, 0, 0);
+    cursor_click_status = 0;
     delay(125);
   }
 }
@@ -584,15 +613,6 @@ void blink(int num_Blinks, int delay_Blinks, int LED_number ) {
 }
 
 //***HID MOUSE CURSOR SPEED FUNCTIONS***//
-
-/* Don't think it's being used
-void cursor_speed_value(void) {
-  int var;
-  EEPROM.get(2, var);
-  delay(5);
-  speed_counter = var;
-}
-*/
 
 void increase_cursor_speed(void) {
   speed_counter++;
@@ -645,34 +665,20 @@ void decrease_cursor_speed(void) {
 //***HID MOUSE CURSOR MOVEMENT FUNCTIONS***//
 
 int y_cursor_high(int j) {
-  Serial.print(" IN Y_CURSOR_HI: ");
-  Serial.print("j: ");
-  Serial.println(j);
-  Serial.print(" y_up: ");
-  Serial.println(y_up);
-  Serial.print("yh_max: ");
-  Serial.println(yh_max);
 
   if (j > y_up) {
-    Serial.println("In the j > y_up condition");
     float y_up_factor = 1.25 * (yh_comp * (((float)(j - y_up)) / (yh_max - y_up)));
-    Serial.print("y_up_factor: ");
-    Serial.println(y_up_factor);
     int k = (int)(round(-1.0 * pow(cursor_max_speed, y_up_factor)) - 1.0);   
     if (k <= (-1 * cursor_max_speed) ) {
       k = -1 * cursor_max_speed;
-      Serial.println("first conditional");
       return k;
     } else if ( (k < 0) && (k > (-1 * cursor_max_speed))) {
-      Serial.println("second conditional");
       return k;
     } else {
-      Serial.println("third conditional");
       k = 0;
       return k;
     }
   } else {
-    Serial.println("fourth conditional");
     return 0;
   }
 }
@@ -684,8 +690,7 @@ int y_cursor_low(int j) {
     float y_down_factor = 1.25 * (yl_comp * (((float)(j - y_down)) / (yl_max - y_down)));
     
     int k = (int)(round(1.0 * pow(cursor_max_speed, y_down_factor)) - 1.0);
-    Serial.print("k:");
-      Serial.println(k);
+    
     if (k >= cursor_max_speed) {
 
       k = cursor_max_speed;
@@ -708,8 +713,7 @@ int x_cursor_high(int j) {
     float x_right_factor = 1.25 * (xh_comp * (((float)(j - x_right)) / (xh_max - x_right)));
     
     int k = (int)(round(1.0 * pow(cursor_max_speed, x_right_factor)) - 1.0);
-    Serial.print("k:");
-      Serial.println(k);
+
     if (k >= cursor_max_speed) {
 
       k = cursor_max_speed;
@@ -732,8 +736,7 @@ int x_cursor_low(int j) {
     float x_left_factor = 1.25 * (xl_comp * (((float)(j - x_left)) / (xl_max - x_left)));
 
     int k = (int)(round(-1.0 * pow(cursor_max_speed, x_left_factor)) - 1.0);
-    Serial.print("k:");
-      Serial.println(k);
+
     if ( k <= (-1 * cursor_max_speed) ) {
       k = -1 * cursor_max_speed;
       return k;
@@ -762,17 +765,22 @@ void ble_mouseCommand(int buttons, int x, int y, int scroll ) {
     ble.println(",");
     
     // Clicking
-    if( buttons == 1 ) { // Left Click
+    if( buttons == MOUSE_LEFT ) { // Left Click
       ble.println(F("AT+BLEHIDMOUSEBUTTON=L,doubleclick"));
-      Serial.println("YOYOYOYOOY LEFT CLICKED");
     }
 
-    if( buttons == 2 ) { // Right Click
+    if( buttons == MOUSE_RIGHT ) { // Right Click
        ble.println(F("AT+BLEHIDMOUSEBUTTON=R"));
-       Serial.println("YOYOYOYOOY RIGHT CLICKED");
+    }
+
+    if( buttons == MOUSE_DRAG ) {
+      ble.println(F("AT+BLEHIDMOUSEBUTTON=L"));
     }
     
-    //if( buttons == 3 ) // Middle Button
+    if( buttons == MOUSE_MIDDLE ) { // Middle Button
+      ble.println(F("AT+BLEHIDMOUSEBUTTON=M"));
+      Serial.println("MIDDLE BUTTON BT MODE");
+    }
     
 }
 
@@ -794,6 +802,7 @@ void mouseCommand(int buttons, int x, int y, int scroll) {
   delay(10);    // reduced poll_counter delay by 30ms so increase delay(10) to delay (40)
 }
 
+/*
 void mouseClear(void) {
 
   byte BTcursor[7];
@@ -809,7 +818,7 @@ void mouseClear(void) {
   Serial1.write(BTcursor, 7);
   Serial1.flush();
   delay(10);
-}
+}*/
 
 //***MOUSE SCROLLING FUNCTION***//
 
@@ -835,11 +844,9 @@ void mouseScroll(void) {
     } else {
 
       if (scroll_up > y_up + 30) {
-        //mouseCommand(0, 0, 0, -1 * y_cursor_high(scroll_up));
         ble_mouseCommand(0, 0, 0, -1 * y_cursor_high(scroll_up));
         delay(cursor_delay * 35);
       } else if (scroll_down > y_down + 30) {
-        //mouseCommand(0, 0, 0, -1 * y_cursor_low(scroll_down));
         ble_mouseCommand(0, 0, 0, -1 * y_cursor_low(scroll_down));
         delay(cursor_delay * 35);
       } else if ((scroll_release > sip_threshold) || (scroll_release < puff_threshold)) {
@@ -1118,6 +1125,8 @@ void Bluetooth_Initialization(void) {
   }
 }
 
+// Following functions have been added to enable the reversal of sipping and puffing
+
 /* Returns True if user sips and sets click as sip
  *         True if user puffs and sets click as puff
  *         False Otherwise
@@ -1143,3 +1152,4 @@ int is_puffed(double cursor_click) {
 
   return cursor_click > sip_threshold;
 }
+
